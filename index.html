@@ -7,122 +7,34 @@
     <style>
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: #f4eae1; /* Creamy parchment background */
+            background-color: #f4eae1; 
             font-family: 'Courier New', Courier, Georgia, serif;
-            color: #4a3b32; /* Warm dark roasted coffee brown text */
+            color: #4a3b32; 
             overflow: auto;
         }
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
         
         .dashboard { 
-            background: #faf4ee; 
-            padding: 24px; 
-            border-radius: 4px; 
-            border: 1px solid #d2b48c; /* Tan/Light brown border */
-            box-shadow: 0 4px 20px rgba(74, 59, 50, 0.08);
-            width: 100%; 
-            max-width: 1300px; 
-            box-sizing: border-box; 
-            display: flex;
-            flex-direction: row;
-            gap: 24px;
-            align-items: stretch;
+            background: #faf4ee; padding: 24px; border-radius: 4px; border: 1px solid #d2b48c; 
+            box-shadow: 0 4px 20px rgba(74, 59, 50, 0.08); width: 100%; max-width: 1300px; 
+            box-sizing: border-box; display: flex; flex-direction: row; gap: 24px; align-items: stretch;
         }
-        
-        .left-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            text-align: left;
-            min-width: 220px;
-        }
-
-        .right-panel {
-            flex: 1.5;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        h2 {
-            margin: 0 0 10px 0;
-            font-size: 16px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: #6e5546;
-        }
-
-        .total-display { 
-            font-size: 22px; 
-            font-weight: normal; 
-            color: #4a3b32; 
-            margin: 0 0 20px 0; 
-            border-bottom: 1px dashed #d2b48c;
-            padding-bottom: 12px;
-        }
-
-        .sync-status {
-            font-size: 11px;
-            font-style: italic;
-            color: #8c6d53;
-            margin-bottom: 15px;
-        }
-        
+        .left-panel { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: left; min-width: 220px; }
+        .right-panel { flex: 1.5; display: flex; flex-direction: column; justify-content: center; }
+        h2 { margin: 0 0 10px 0; font-size: 16px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: #6e5546; }
+        .total-display { font-size: 22px; font-weight: normal; color: #4a3b32; margin: 0 0 20px 0; border-bottom: 1px dashed #d2b48c; padding-bottom: 12px; }
+        .sync-status { font-size: 11px; font-style: italic; color: #8c6d53; margin-bottom: 15px; }
         .controls { display: flex; flex-direction: column; gap: 12px; width: 100%; }
-        
-        input, button { 
-            padding: 12px; 
-            border-radius: 3px; 
-            font-size: 15px; 
-            font-family: inherit;
-            -webkit-appearance: none; 
-            box-sizing: border-box;
-            width: 100%;
-        }
-        input { 
-            background: #ffffff; 
-            color: #4a3b32; 
-            border: 1px solid #c2a688;
-            text-align: center;
-        }
+        input, button { padding: 12px; border-radius: 3px; font-size: 15px; font-family: inherit; -webkit-appearance: none; box-sizing: border-box; width: 100%; }
+        input { background: #ffffff; color: #4a3b32; border: 1px solid #c2a688; text-align: center; }
         input::placeholder { color: #bca085; font-style: italic; }
         input:focus { outline: none; border-color: #8c6d53; background: #fffcf9; }
-        
-        button { 
-            background: #8c6d53; 
-            color: #ffffff; 
-            font-weight: bold; 
-            border: 1px solid #70543e;
-            cursor: pointer; 
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        button { background: #8c6d53; color: #ffffff; font-weight: bold; border: 1px solid #70543e; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
         button:disabled { background: #bca085; cursor: not-allowed; }
         button:active { background: #70543e; }
-        
-        .chart-container { 
-            position: relative; 
-            height: 360px; 
-            width: 100%; 
-            background-color: #fdfbf7;
-            border: 1px solid #c2a688; 
-            border-radius: 2px;
-            box-sizing: border-box;
-        }
-        
-        canvas { 
-            width: 100%; 
-            height: 100%; 
-            display: block;
-        }
-
-        @media (max-width: 800px) {
-            .dashboard {
-                flex-direction: column;
-            }
-        }
+        .chart-container { position: relative; height: 360px; width: 100%; background-color: #fdfbf7; border: 1px solid #c2a688; border-radius: 2px; box-sizing: border-box; }
+        canvas { width: 100%; height: 100%; display: block; }
+        @media (max-width: 800px) { .dashboard { flex-direction: column; } }
     </style>
 </head>
 <body>
@@ -137,7 +49,6 @@
                 <button id="recordBtn" onclick="calculateAndPlot()">Record</button>
             </div>
         </div>
-
         <div class="right-panel">
             <div class="chart-container">
                 <canvas id="liveChart" width="650" height="460"></canvas>
@@ -145,21 +56,17 @@
         </div>
     </div>
 
-    <!-- CLEAN SINGLE SCRIPT CONTAINER INJECTION -->
     <script>
-        const EXCEL_API_URL = "https://sheetbest.com"; 
+        // PASTE YOUR NEW GOOGLE APPS SCRIPT URL HERE
+        const EXCEL_API_URL = "https://script.google.com/macros/s/AKfycbw6ZEJ9FzSYyVwYXmqBHElLCtiAjXU8X-uXumG2kYy4uKn1D-x12ZPb1zYf4nwdIvKJTA/exec"; 
 		
         let inputHistory = new Array();
         const canvas = document.getElementById('liveChart');
         const ctx = canvas.getContext('2d');
 
-        // Main initial load engine orchestration wrap
         window.onload = function() {
-            console.log("App startup successfully initiated.");
-            console.log("Target Cloud URL Context: ", EXCEL_API_URL);
-            
-            if(EXCEL_API_URL === "" || EXCEL_API_URL.includes("YOUR_EXCEL_API")) {
-                document.getElementById('statusIndicator').textContent = "⚠️ Config missing on line 125.";
+            if(EXCEL_API_URL === "" || EXCEL_API_URL.includes("https://script.google.com/macros/s/AKfycbw6ZEJ9FzSYyVwYXmqBHElLCtiAjXU8X-uXumG2kYy4uKn1D-x12ZPb1zYf4nwdIvKJTA/exec")) {
+                document.getElementById('statusIndicator').textContent = "⚠️ Add your Google Web App link on line 125.";
                 clearAndDrawGridStructure();
                 return;
             }
@@ -168,19 +75,11 @@
 
         function loadDataFromExcel() {
             document.getElementById('statusIndicator').textContent = "🔄 Downloading tracking row segments...";
-            console.log("Broadcasting database GET query connection stream...");
             
-            fetch(EXCEL_API_URL)
+            fetch(EXCEL_API_URL, { method: "GET", redirect: "follow" })
                 .then(response => response.json())
                 .then(data => {
-                    console.log("Database fetch successful. Core Payload: ", data);
-                    
-                    inputHistory = data.map(row => {
-                        let parsed = parseFloat(row.amount);
-                        return isNaN(parsed) ? null : parsed;
-                    }).filter(val => val !== null);
-                    
-                    console.log("Processed plot coordinates mapping index: ", inputHistory);
+                    inputHistory = data.map(row => parseFloat(row.amount)).filter(val => !isNaN(val));
                     
                     if (inputHistory.length > 0) {
                         const lastValue = inputHistory[inputHistory.length - 1];
@@ -192,8 +91,8 @@
                     renderNativeCanvasPointsLines();
                 })
                 .catch(error => {
-                    console.error("Critical download error context flag: ", error);
-                    document.getElementById('statusIndicator').textContent = "❌ Connection failed. Check sheet settings.";
+                    console.error("Fetch Error:", error);
+                    document.getElementById('statusIndicator').textContent = "❌ Connection failed. Check permissions.";
                     clearAndDrawGridStructure();
                 });
         }
@@ -213,22 +112,19 @@
             ctx.beginPath(); ctx.moveTo(20, canvas.height - 20); ctx.lineTo(canvas.width - 20, canvas.height - 20); ctx.stroke();
         }
 
-        function checkEnterKey(event) {
-            if (event.key === "Enter") {
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Enter" && document.activeElement.id === "amountInput") {
                 event.preventDefault(); 
                 calculateAndPlot();
             }
-        }
+        });
 
         function drawPrecisionHandDrawnLine(x1, y1, x2, y2) {
             ctx.strokeStyle = '#5c4033'; ctx.lineWidth = 2.2; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
             const midX = (x1 + x2) / 2; const midY = (y1 + y2) / 2;
             const jitterScale = 0.5; 
             const offsetChangeX = (Math.random() - 0.5) * jitterScale; const offsetChangeY = (Math.random() - 0.5) * jitterScale;
-            ctx.beginPath(); 
-            ctx.moveTo(x1, y1); 
-            ctx.quadraticCurveTo(midX + offsetChangeX, midY + offsetChangeY, x2, y2); 
-            ctx.stroke(); 
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(midX + offsetChangeX, midY + offsetChangeY, x2, y2); ctx.stroke();
         }
 
         function calculateAndPlot() {
@@ -240,18 +136,61 @@
                 input.disabled = true;
                 btn.disabled = true;
                 document.getElementById('statusIndicator').textContent = "📤 Broadcasting entry to Google Sheets...";
-                console.log("Dispatching POST data frame object sequence: ", enteredAmount);
 
+                // FIXED: Direct text POST formatting payload explicitly designed to satisfy Google endpoints
                 fetch(EXCEL_API_URL, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    redirect: "follow",
                     body: JSON.stringify({ amount: enteredAmount }) 
                 })
-                .then(response => response.json())
-                .then(result => {
-                    console.log("Database update save operation successful: ", result);
+                .then(response => {
                     inputHistory.push(enteredAmount);
                     document.getElementById('valueDisplay').textContent = enteredAmount.toFixed(2);
                     document.getElementById('statusIndicator').textContent = "✅ Google Sheet Saved.";
                     
-clearAndDrawGridStructure();renderNativeCanvasPointsLines();input.value = '';input.disabled = false;btn.disabled = false;input.focus();}).catch(error => {console.error("Critical database save crash data: ", error);document.getElementById('statusIndicator').textContent = "❌ Failed to save. Network issue.";input.disabled = false;btn.disabled = false;input.focus();});} else {input.focus();}}function renderNativeCanvasPointsLines() {if (inputHistory.length === 0) return;const padding = 30;const chartWidth = canvas.width - (padding * 2);const chartHeight = canvas.height - (padding * 2);let maxVal = Math.max(...inputHistory);if (maxVal === 0) maxVal = 10;const points = inputHistory.map((val, index) => {const x = padding + (index * (chartWidth / Math.max(inputHistory.length - 1, 1)));const y = (canvas.height - padding) - ((val / maxVal) * chartHeight);return { x: x, y: y };});for (let i = 0; i < points.length - 1; i++) {drawPrecisionHandDrawnLine(points[i].x, points[i].y, points[i+1].x, points[i+1].y);}points.forEach(pt => {ctx.fillStyle = '#b87333'; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.fill();ctx.strokeStyle = '#5c4033'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.stroke();});}
+                    clearAndDrawGridStructure();
+                    renderNativeCanvasPointsLines();
+                    
+                    input.value = '';
+                    input.disabled = false;
+                    btn.disabled = false;
+                    input.focus();
+                })
+                .catch(error => {
+                    console.error("Network Error: ", error);
+                    document.getElementById('statusIndicator').textContent = "❌ Failed to save. Network issue.";
+                    input.disabled = false;
+                    btn.disabled = false;
+                    input.focus();
+                });
+            } else {
+                input.focus(); 
+            }
+        }
+
+        function renderNativeCanvasPointsLines() {
+            if (inputHistory.length === 0) return;
+            const padding = 30;
+            const chartWidth = canvas.width - (padding * 2);
+            const chartHeight = canvas.height - (padding * 2);
+            let maxVal = Math.max(...inputHistory);
+            if (maxVal === 0) maxVal = 10;
+
+            const points = inputHistory.map((val, index) => {
+                const x = padding + (index * (chartWidth / Math.max(inputHistory.length - 1, 1)));
+                const y = (canvas.height - padding) - ((val / maxVal) * chartHeight);
+                return { x: x, y: y };
+            });
+
+            for (let i = 0; i < points.length - 1; i++) {
+                drawPrecisionHandDrawnLine(points[i].x, points[i].y, points[i+1].x, points[i+1].y);
+            }
+
+            points.forEach(pt => {
+                ctx.fillStyle = '#b87333'; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#5c4033'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.stroke();
+            });
+        }
+    </script>
+</body>
+</html>
