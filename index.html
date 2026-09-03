@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vintage Aesthetic Journal Tracker</title>
+    <title>Vintage Journal Excel-Sync Tracker</title>
     <style>
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%;
@@ -62,6 +62,13 @@
             border-bottom: 1px dashed #d2b48c;
             padding-bottom: 12px;
         }
+
+        .sync-status {
+            font-size: 11px;
+            font-style: italic;
+            color: #8c6d53;
+            margin-bottom: 15px;
+        }
         
         .controls { display: flex; flex-direction: column; gap: 12px; width: 100%; }
         
@@ -91,17 +98,9 @@
             cursor: pointer; 
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-top: 4px;
         }
+        button:disabled { background: #bca085; cursor: not-allowed; }
         button:active { background: #70543e; }
-        
-        /* Reset button design matching vintage style */
-        .reset-btn {
-            background: #e6dfd5;
-            color: #6e5546;
-            border: 1px solid #c2a688;
-        }
-        .reset-btn:active { background: #d2b48c; }
         
         .chart-container { 
             position: relative; 
@@ -130,13 +129,12 @@
 
     <div class="dashboard">
         <div class="left-panel">
-            <h2>Finance Tracker</h2>
+            <h2>Excel Live Sync</h2>
             <div class="total-display">Amount: <span id="valueDisplay">0.00</span></div>
+            <div id="statusIndicator" class="sync-status">Connecting to live cloud sheet...</div>
             <div class="controls">
                 <input type="number" step="any" inputmode="decimal" id="amountInput" placeholder="input data..." onkeydown="checkEnterKey(event)">
-                <button onclick="calculateAndPlot()">Record</button>
-                <!-- NEW: Clear History button to manually reset saved memory -->
-                <button onclick="clearSavedData()" class="reset-btn">Clear Chart</button>
+                <button id="recordBtn" onclick="calculateAndPlot()">Record</button>
             </div>
         </div>
 
@@ -148,45 +146,59 @@
     </div>
 
     <script>
-        // FIXED: Instantly pulls up saved local string arrays upon initialization
+        // REPLACE WITH YOUR SHEET BEST OR STEIN GENERATED API CONNECTION LINK
+        const EXCEL_API_URL = "https://api.sheetbest.com/sheets/b905a8b6-677c-4b2c-9ad5-6a45f01da023"; 
+
         let inputHistory = new Array();
-        
         const canvas = document.getElementById('liveChart');
         const ctx = canvas.getContext('2d');
 
-        // FIXED: Load saved values immediately when page mounts
+        // Automatically fetch data history directly from Excel Online when loading the page
         window.onload = function() {
-            const savedData = localStorage.getItem('trackerHistoryData');
-            if (savedData) {
-                // Parse strings back into code arrays
-                inputHistory = JSON.parse(savedData);
-                if (inputHistory.length > 0) {
-                    const lastValue = inputHistory[inputHistory.length - 1];
-                    document.getElementById('valueDisplay').textContent = lastValue.toFixed(2);
-                }
+            if(EXCEL_API_URL === "https://api.sheetbest.com/sheets/b905a8b6-677c-4b2c-9ad5-6a45f01da023") {
+                document.getElementById('statusIndicator').textContent = "⚠️ Add your Excel API URL on line 125.";
+                clearAndDrawGridStructure();
+                return;
             }
-            clearAndDrawGridStructure();
-            renderNativeCanvasPointsLines();
+            loadDataFromExcel();
         };
+
+        function loadDataFromExcel() {
+            document.getElementById('statusIndicator').textContent = "🔄 Downloading tracking row segments...";
+            
+            fetch(EXCEL_API_URL)
+                .then(response => response.json())
+                .then(data => {
+                    // Extract values from the "amount" header rows inside your spreadsheet
+                    inputHistory = data.map(row => parseFloat(row.amount)).filter(val => !isNaN(val));
+                    
+                    if (inputHistory.length > 0) {
+                        const lastValue = inputHistory[inputHistory.length - 1];
+                        document.getElementById('valueDisplay').textContent = lastValue.toFixed(2);
+                    }
+                    document.getElementById('statusIndicator').textContent = "✅ Cloud sheet synchronized.";
+                    clearAndDrawGridStructure();
+                    renderNativeCanvasPointsLines();
+                })
+                .catch(error => {
+                    console.error(error);
+                    document.getElementById('statusIndicator').textContent = "❌ Connection failed. Check settings.";
+                });
+        }
 
         function clearAndDrawGridStructure() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.strokeStyle = 'rgba(210, 180, 140, 0.25)';
             ctx.lineWidth = 1;
-            
             for (let x = 20; x < canvas.width; x += 30) {
                 ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
             }
             for (let y = 20; y < canvas.height; y += 30) {
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
             }
-
             ctx.strokeStyle = 'rgba(140, 109, 83, 0.5)';
             ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(20, canvas.height - 20);
-            ctx.lineTo(canvas.width - 20, canvas.height - 20);
-            ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(20, canvas.height - 20); ctx.lineTo(canvas.width - 20, canvas.height - 20); ctx.stroke();
         }
 
         function checkEnterKey(event) {
@@ -197,87 +209,51 @@
         }
 
         function drawPrecisionHandDrawnLine(x1, y1, x2, y2) {
-            ctx.strokeStyle = '#5c4033'; 
-            ctx.lineWidth = 2.2; 
-            ctx.lineJoin = 'round';
-            ctx.lineCap = 'round';
-
-            const midX = (x1 + x2) / 2;
-            const midY = (y1 + y2) / 2;
+            ctx.strokeStyle = '#5c4033'; ctx.lineWidth = 2.2; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+            const midX = (x1 + x2) / 2; const midY = (y1 + y2) / 2;
             const jitterScale = 0.5; 
-            const offsetChangeX = (Math.random() - 0.5) * jitterScale;
-            const offsetChangeY = (Math.random() - 0.5) * jitterScale;
-
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.quadraticCurveTo(midX + offsetChangeX, midY + offsetChangeY, x2, y2);
-            ctx.stroke();
+            const offsetChangeX = (Math.random() - 0.5) * jitterScale; const offsetChangeY = (Math.random() - 0.5) * jitterScale;
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(midX + offsetChangeX, midY + offsetChangeY, x2, y2); ctx.stroke();
         }
 
         function calculateAndPlot() {
             const input = document.getElementById('amountInput');
+            const btn = document.getElementById('recordBtn');
             const enteredAmount = parseFloat(input.value);
 
             if (!isNaN(enteredAmount)) {
-                document.getElementById('valueDisplay').textContent = enteredAmount.toFixed(2);
-                inputHistory.push(enteredAmount);
-                
-                // FIXED: Stringify and commit array straight into LocalStorage memory partitions
-                localStorage.setItem('trackerHistoryData', JSON.stringify(inputHistory));
-                
-                clearAndDrawGridStructure();
-                renderNativeCanvasPointsLines();
+                // Lock fields temporarily while sending packets across the cloud network
+                input.disabled = true;
+                btn.disabled = true;
+                document.getElementById('statusIndicator').textContent = "📤 Broadcasting entry to Excel...";
 
-                input.value = '';
-                input.focus(); 
+                // Network packet: Send payload to your spreadsheet table object
+                fetch(EXCEL_API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify([{ amount: enteredAmount }]) // Maps straight into the "amount" header
+                })
+                .then(response => {
+                    inputHistory.push(enteredAmount);
+                    document.getElementById('valueDisplay').textContent = enteredAmount.toFixed(2);
+                    
+                    document.getElementById('statusIndicator').textContent = "✅ Excel Saved.";
+                    clearAndDrawGridStructure();
+                    renderNativeCanvasPointsLines();
+                    
+                    // Unlock fields and refocus text cursor
+                    input.value = '';
+                    input.disabled = false;
+                    btn.disabled = false;
+                    input.focus();
+                })
+                .catch(error => {
+                    console.error(error);
+                    document.getElementById('statusIndicator').textContent = "❌ Failed to save. Field reset.";
+                    input.disabled = false;
+                    btn.disabled = false;
+                    input.focus();
+                });
             } else {
                 input.focus(); 
-            }
-        }
-
-        // NEW: Clear function to let you wipe the storage slate whenever you want to restart
-        function clearSavedData() {
-            if (confirm("Are you sure you want to clear your data history?")) {
-                localStorage.removeItem('trackerHistoryData');
-                inputHistory = new Array();
-                document.getElementById('valueDisplay').textContent = "0.00";
-                clearAndDrawGridStructure();
-            }
-        }
-
-        function renderNativeCanvasPointsLines() {
-            if (inputHistory.length === 0) return;
-
-            const padding = 30;
-            const chartWidth = canvas.width - (padding * 2);
-            const chartHeight = canvas.height - (padding * 2);
-
-            let maxVal = Math.max(...inputHistory);
-            if (maxVal === 0) maxVal = 10;
-
-            const points = inputHistory.map((val, index) => {
-                const x = padding + (index * (chartWidth / Math.max(inputHistory.length - 1, 1)));
-                const y = (canvas.height - padding) - ((val / maxVal) * chartHeight);
-                return { x: x, y: y };
-            });
-
-            for (let i = 0; i < points.length - 1; i++) {
-                drawPrecisionHandDrawnLine(points[i].x, points[i].y, points[i+1].x, points[i+1].y);
-            }
-
-            points.forEach(pt => {
-                ctx.fillStyle = '#b87333'; 
-                ctx.beginPath();
-                ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.strokeStyle = '#5c4033';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
-                ctx.stroke();
-            });
-        }
-    </script>
-</body>
-</html>
+}}function renderNativeCanvasPointsLines() {if (inputHistory.length === 0) return;const padding = 30;const chartWidth = canvas.width - (padding * 2);const chartHeight = canvas.height - (padding * 2);let maxVal = Math.max(...inputHistory);if (maxVal === 0) maxVal = 10;const points = inputHistory.map((val, index) => {const x = padding + (index * (chartWidth / Math.max(inputHistory.length - 1, 1)));const y = (canvas.height - padding) - ((val / maxVal) * chartHeight);return { x: x, y: y };});for (let i = 0; i < points.length - 1; i++) {drawPrecisionHandDrawnLine(points[i].x, points[i].y, points[i+1].x, points[i+1].y);}points.forEach(pt => {ctx.fillStyle = '#b87333'; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.fill();ctx.strokeStyle = '#5c4033'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.stroke();});}
