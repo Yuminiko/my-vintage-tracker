@@ -167,6 +167,7 @@
             fetch(EXCEL_API_URL)
                 .then(response => response.json())
                 .then(data => {
+				console.log('data',data)
                     // FIXED: Force Sheet Best rows to aggressively translate string inputs into clean JS integers
                     inputHistory = data.map(row => {
                         let parsed = parseFloat(row.amount);
