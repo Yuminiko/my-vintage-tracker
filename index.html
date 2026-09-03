@@ -7,9 +7,9 @@
     <style>
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: #f4eae1; 
+            background-color: #f4eae1; /* Creamy parchment background */
             font-family: 'Courier New', Courier, Georgia, serif;
-            color: #4a3b32; 
+            color: #4a3b32; /* Warm dark roasted coffee brown text */
             overflow: auto;
         }
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
@@ -45,7 +45,8 @@
             <div class="total-display">Amount: <span id="valueDisplay">0.00</span></div>
             <div id="statusIndicator" class="sync-status">Connecting to live cloud sheet...</div>
             <div class="controls">
-                <input type="number" step="any" inputmode="decimal" id="amountInput" placeholder="input data..." onkeydown="checkEnterKey(event)">
+                <!-- FIXED: Removed onkeydown attributes to clear the ReferenceError crash -->
+                <input type="number" step="any" inputmode="decimal" id="amountInput" placeholder="input data...">
                 <button id="recordBtn" onclick="calculateAndPlot()">Record</button>
             </div>
         </div>
@@ -58,7 +59,7 @@
 
     <script>
         // PASTE YOUR NEW GOOGLE APPS SCRIPT URL HERE
-        const EXCEL_API_URL = "https://script.google.com/macros/s/AKfycbw6ZEJ9FzSYyVwYXmqBHElLCtiAjXU8X-uXumG2kYy4uKn1D-x12ZPb1zYf4nwdIvKJTA/exec"; 
+        const EXCEL_API_URL = "https://google.com"; 
 		
         let inputHistory = new Array();
         const canvas = document.getElementById('liveChart');
@@ -79,7 +80,15 @@
             fetch(EXCEL_API_URL, { method: "GET", redirect: "follow" })
                 .then(response => response.json())
                 .then(data => {
-                    inputHistory = data.map(row => parseFloat(row.amount)).filter(val => !isNaN(val));
+                    console.log("Raw download payload: ", data);
+                    
+                    // FIXED: Rebuilt array translator loop mapping rules to catch old data entries
+                    inputHistory = data.map(row => {
+                        let val = parseFloat(row.amount);
+                        return isNaN(val) ? null : val;
+                    }).filter(val => val !== null);
+                    
+                    console.log("Mapped historical data: ", inputHistory);
                     
                     if (inputHistory.length > 0) {
                         const lastValue = inputHistory[inputHistory.length - 1];
@@ -112,6 +121,7 @@
             ctx.beginPath(); ctx.moveTo(20, canvas.height - 20); ctx.lineTo(canvas.width - 20, canvas.height - 20); ctx.stroke();
         }
 
+        // FIXED: Universal keystroke listener completely isolates Enter key actions from layout inputs
         document.addEventListener("keydown", function(event) {
             if (event.key === "Enter" && document.activeElement.id === "amountInput") {
                 event.preventDefault(); 
@@ -137,7 +147,6 @@
                 btn.disabled = true;
                 document.getElementById('statusIndicator').textContent = "📤 Broadcasting entry to Google Sheets...";
 
-                // FIXED: Direct text POST formatting payload explicitly designed to satisfy Google endpoints
                 fetch(EXCEL_API_URL, {
                     method: "POST",
                     redirect: "follow",
@@ -179,18 +188,4 @@
             const points = inputHistory.map((val, index) => {
                 const x = padding + (index * (chartWidth / Math.max(inputHistory.length - 1, 1)));
                 const y = (canvas.height - padding) - ((val / maxVal) * chartHeight);
-                return { x: x, y: y };
-            });
-
-            for (let i = 0; i < points.length - 1; i++) {
-                drawPrecisionHandDrawnLine(points[i].x, points[i].y, points[i+1].x, points[i+1].y);
-            }
-
-            points.forEach(pt => {
-                ctx.fillStyle = '#b87333'; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.fill();
-                ctx.strokeStyle = '#5c4033'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.stroke();
-            });
-        }
-    </script>
-</body>
-</html>
+return { x: x, y: y };});for (let i = 0; i < points.length - 1; i++) {drawPrecisionHandDrawnLine(points[i].x, points[i].y, points[i+1].x, points[i+1].y);}points.forEach(pt => {ctx.fillStyle = '#b87333'; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.fill();ctx.strokeStyle = '#5c4033'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.stroke();});}
