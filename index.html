@@ -14,7 +14,6 @@
         }
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
         
-        /* Dashboard Layout: Splitting children elements into a side-by-side row framework */
         .dashboard { 
             background: #faf4ee; 
             padding: 24px; 
@@ -22,7 +21,7 @@
             border: 1px solid #d2b48c; /* Tan/Light brown border */
             box-shadow: 0 4px 20px rgba(74, 59, 50, 0.08);
             width: 100%; 
-            max-width: 800px; /* Widened screen container layout bounds */
+            max-width: 1300px; 
             box-sizing: border-box; 
             display: flex;
             flex-direction: row;
@@ -30,7 +29,6 @@
             align-items: stretch;
         }
         
-        /* Left Column Content Layout Wrapper Panel */
         .left-panel {
             flex: 1;
             display: flex;
@@ -40,7 +38,6 @@
             min-width: 220px;
         }
 
-        /* Right Column Content Layout Wrapper Panel */
         .right-panel {
             flex: 1.5;
             display: flex;
@@ -68,7 +65,6 @@
         
         .controls { display: flex; flex-direction: column; gap: 12px; width: 100%; }
         
-        /* Input & Buttons styled with elegant typewriter layout */
         input, button { 
             padding: 12px; 
             border-radius: 3px; 
@@ -88,20 +84,28 @@
         input:focus { outline: none; border-color: #8c6d53; background: #fffcf9; }
         
         button { 
-            background: #8c6d53; /* Medium warm coffee brown */
+            background: #8c6d53; 
             color: #ffffff; 
             font-weight: bold; 
             border: 1px solid #70543e;
             cursor: pointer; 
             text-transform: uppercase;
             letter-spacing: 1px;
+            margin-top: 4px;
         }
         button:active { background: #70543e; }
         
-        /* Grid container styled like archival laboratory graphing paper */
+        /* Reset button design matching vintage style */
+        .reset-btn {
+            background: #e6dfd5;
+            color: #6e5546;
+            border: 1px solid #c2a688;
+        }
+        .reset-btn:active { background: #d2b48c; }
+        
         .chart-container { 
             position: relative; 
-            height: 260px; 
+            height: 360px; 
             width: 100%; 
             background-color: #fdfbf7;
             border: 1px solid #c2a688; 
@@ -115,8 +119,7 @@
             display: block;
         }
 
-        /* Fallback breakpoint for small phone screens in portrait mode orientation contexts */
-        @media (max-width: 600px) {
+        @media (max-width: 800px) {
             .dashboard {
                 flex-direction: column;
             }
@@ -126,49 +129,58 @@
 <body>
 
     <div class="dashboard">
-        <!-- LEFT COLUMN: SYSTEM CONTROL INPUT MODULE -->
         <div class="left-panel">
             <h2>Finance Tracker</h2>
             <div class="total-display">Amount: <span id="valueDisplay">0.00</span></div>
             <div class="controls">
-                <input type="number" step="any" inputmode="decimal" id="amountInput" placeholder="input data...">
-                <button onclick="calculateAndPlot()">Input</button>
+                <input type="number" step="any" inputmode="decimal" id="amountInput" placeholder="input data..." onkeydown="checkEnterKey(event)">
+                <button onclick="calculateAndPlot()">Record</button>
+                <!-- NEW: Clear History button to manually reset saved memory -->
+                <button onclick="clearSavedData()" class="reset-btn">Clear Chart</button>
             </div>
         </div>
 
-        <!-- RIGHT COLUMN: THE ARCHIVAL LINE GRAPH -->
         <div class="right-panel">
             <div class="chart-container">
-                <canvas id="liveChart" width="450" height="260"></canvas>
+                <canvas id="liveChart" width="650" height="460"></canvas>
             </div>
         </div>
     </div>
 
     <script>
-        const inputHistory = new Array();
+        // FIXED: Instantly pulls up saved local string arrays upon initialization
+        let inputHistory = new Array();
         
         const canvas = document.getElementById('liveChart');
         const ctx = canvas.getContext('2d');
 
-        clearAndDrawGridStructure();
+        // FIXED: Load saved values immediately when page mounts
+        window.onload = function() {
+            const savedData = localStorage.getItem('trackerHistoryData');
+            if (savedData) {
+                // Parse strings back into code arrays
+                inputHistory = JSON.parse(savedData);
+                if (inputHistory.length > 0) {
+                    const lastValue = inputHistory[inputHistory.length - 1];
+                    document.getElementById('valueDisplay').textContent = lastValue.toFixed(2);
+                }
+            }
+            clearAndDrawGridStructure();
+            renderNativeCanvasPointsLines();
+        };
 
         function clearAndDrawGridStructure() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Pale sepia/tan lines to form an engineering logbook grid style
             ctx.strokeStyle = 'rgba(210, 180, 140, 0.25)';
             ctx.lineWidth = 1;
             
-            // Vertical grid paths
             for (let x = 20; x < canvas.width; x += 30) {
                 ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
             }
-            // Horizontal grid paths
             for (let y = 20; y < canvas.height; y += 30) {
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
             }
 
-            // Main base baseline axis rule
             ctx.strokeStyle = 'rgba(140, 109, 83, 0.5)';
             ctx.lineWidth = 1.5;
             ctx.beginPath();
@@ -177,17 +189,21 @@
             ctx.stroke();
         }
 
-        // Refined line generator: highly precise but retains tiny organic micro-jitters
+        function checkEnterKey(event) {
+            if (event.key === "Enter") {
+                event.preventDefault(); 
+                calculateAndPlot();
+            }
+        }
+
         function drawPrecisionHandDrawnLine(x1, y1, x2, y2) {
-            ctx.strokeStyle = '#5c4033'; /* Fine dark sepia ink stroke color */
-            ctx.lineWidth = 2.2; /* Slightly thinner pen weight */
+            ctx.strokeStyle = '#5c4033'; 
+            ctx.lineWidth = 2.2; 
             ctx.lineJoin = 'round';
             ctx.lineCap = 'round';
 
             const midX = (x1 + x2) / 2;
             const midY = (y1 + y2) / 2;
-
-            // REDUCED JITTER SCALE: Provides much tighter, crisper, more precise plotting lines
             const jitterScale = 0.5; 
             const offsetChangeX = (Math.random() - 0.5) * jitterScale;
             const offsetChangeY = (Math.random() - 0.5) * jitterScale;
@@ -206,11 +222,26 @@
                 document.getElementById('valueDisplay').textContent = enteredAmount.toFixed(2);
                 inputHistory.push(enteredAmount);
                 
+                // FIXED: Stringify and commit array straight into LocalStorage memory partitions
+                localStorage.setItem('trackerHistoryData', JSON.stringify(inputHistory));
+                
                 clearAndDrawGridStructure();
                 renderNativeCanvasPointsLines();
 
-                input.blur();
                 input.value = '';
+                input.focus(); 
+            } else {
+                input.focus(); 
+            }
+        }
+
+        // NEW: Clear function to let you wipe the storage slate whenever you want to restart
+        function clearSavedData() {
+            if (confirm("Are you sure you want to clear your data history?")) {
+                localStorage.removeItem('trackerHistoryData');
+                inputHistory = new Array();
+                document.getElementById('valueDisplay').textContent = "0.00";
+                clearAndDrawGridStructure();
             }
         }
 
@@ -234,15 +265,12 @@
                 drawPrecisionHandDrawnLine(points[i].x, points[i].y, points[i+1].x, points[i+1].y);
             }
 
-            // Draw compact, sharp ink nodes over coordinates
             points.forEach(pt => {
-                ctx.fillStyle = '#b87333'; /* Distinguishable warm copper/terracotta accent color */
+                ctx.fillStyle = '#b87333'; 
                 ctx.beginPath();
-                // REDUCED DOT SIZE: fine point pen tip aesthetic
                 ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Add a very small ring buffer layer around it to make it pop beautifully
                 ctx.strokeStyle = '#5c4033';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
