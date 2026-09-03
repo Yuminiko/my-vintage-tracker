@@ -57,7 +57,7 @@
     </div>
 
     <script>
-        // PASTE YOUR NEW GOOGLE APPS SCRIPT URL HERE
+        // PASTE YOUR FRESH CODE DEPLOYMENT LINK HERE
         const EXCEL_API_URL = "https://script.google.com/macros/s/AKfycbw6ZEJ9FzSYyVwYXmqBHElLCtiAjXU8X-uXumG2kYy4uKn1D-x12ZPb1zYf4nwdIvKJTA/exec"; 
 		
         let inputHistory = new Array();
@@ -66,6 +66,7 @@
 
         window.onload = function() {
             if(EXCEL_API_URL === "" || EXCEL_API_URL.includes("https://script.google.com/macros/s/AKfycbw6ZEJ9FzSYyVwYXmqBHElLCtiAjXU8X-uXumG2kYy4uKn1D-x12ZPb1zYf4nwdIvKJTA/exec")) {
+                document.getElementById('statusIndicator').textContent = "⚠️ Add your Google Web App link on line 125.";
                 clearAndDrawGridStructure();
                 return;
             }
@@ -74,56 +75,30 @@
 
         function loadDataFromExcel() {
             document.getElementById('statusIndicator').textContent = "🔄 Downloading tracking row segments...";
-            console.log("Broadcasting database GET query connection stream...");
             
-            // FIXED: Added mode and strict redirect configurations to force Chrome to follow Google's internal 302 jumps
-            fetch(EXCEL_API_URL, { 
-                method: "GET",
-                mode: "cors",
-                redirect: "follow",
-                headers: {
-                    "Content-Type": "text/plain;charset=utf-8"
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error("HTTP error! status: " + response.status);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log("Database fetch successful. Core Payload: ", data);
-                
-                // If Google sends back an error message wrapped inside the JSON, log it
-                if (data.error) {
-                    console.error("Google Script internal error: ", data.error);
-                    document.getElementById('statusIndicator').textContent = "❌ Sheet error. Check Apps Script logs.";
-                    return;
-                }
-
-                inputHistory = data.map(row => {
-                    let parsed = parseFloat(row.amount);
-                    return isNaN(parsed) ? null : parsed;
-                }).filter(val => val !== null);
-                
-                console.log("Processed plot coordinates mapping index: ", inputHistory);
-                
-                if (inputHistory.length > 0) {
-                    const lastValue = inputHistory[inputHistory.length - 1];
-                    document.getElementById('valueDisplay').textContent = lastValue.toFixed(2);
-                }
-                
-                document.getElementById('statusIndicator').textContent = "✅ Cloud sheet synchronized.";
-                clearAndDrawGridStructure();
-                renderNativeCanvasPointsLines();
-            })
-            .catch(error => {
-                console.error("Critical download error context flag: ", error);
-                document.getElementById('statusIndicator').textContent = "❌ Connection failed. Check sheet settings.";
-                clearAndDrawGridStructure();
-            });
+            // Vanilla fetch connection profile forces browser redirects to handle handshakes naturally
+            fetch(EXCEL_API_URL)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Synchronized data array mapping:", data);
+                    
+                    inputHistory = data.map(row => parseFloat(row.amount)).filter(val => !isNaN(val));
+                    
+                    if (inputHistory.length > 0) {
+                        const lastValue = inputHistory[inputHistory.length - 1];
+                        document.getElementById('valueDisplay').textContent = lastValue.toFixed(2);
+                    }
+                    
+                    document.getElementById('statusIndicator').textContent = "✅ Cloud sheet synchronized.";
+                    clearAndDrawGridStructure();
+                    renderNativeCanvasPointsLines();
+                })
+                .catch(error => {
+                    console.error("Fetch Failure context profile:", error);
+                    document.getElementById('statusIndicator').textContent = "❌ Connection failed. Check sheet settings.";
+                    clearAndDrawGridStructure();
+                });
         }
-
 
         function clearAndDrawGridStructure() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -165,10 +140,8 @@
                 btn.disabled = true;
                 document.getElementById('statusIndicator').textContent = "📤 Broadcasting entry to Google Sheets...";
 
-                // FIXED: Direct text POST formatting payload explicitly designed to satisfy Google endpoints
                 fetch(EXCEL_API_URL, {
                     method: "POST",
-                    redirect: "follow",
                     body: JSON.stringify({ amount: enteredAmount }) 
                 })
                 .then(response => {
