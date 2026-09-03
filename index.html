@@ -153,7 +153,7 @@
         const ctx = canvas.getContext('2d');
 
         window.onload = function() {
-            if(EXCEL_API_URL === "" || EXCEL_API_URL.includes("YOUR_EXCEL_API")) {
+            if(EXCEL_API_URL === "" || EXCEL_API_URL.includes("https://api.sheetbest.com/sheets/b905a8b6-677c-4b2c-9ad5-6a45f01da023")) {
                 document.getElementById('statusIndicator').textContent = "⚠️ Add your Excel API URL on line 125.";
                 clearAndDrawGridStructure();
                 return;
