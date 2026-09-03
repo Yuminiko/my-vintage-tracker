@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vintage Aesthetic Journal Tracker</title>
+    <style>
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #f4eae1; /* Creamy parchment background */
+            font-family: 'Courier New', Courier, Georgia, serif;
+            color: #4a3b32; /* Warm dark roasted coffee brown text */
+            overflow: auto;
+        }
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
+        
+        /* Dashboard Layout: Splitting children elements into a side-by-side row framework */
+        .dashboard { 
+            background: #faf4ee; 
+            padding: 24px; 
+            border-radius: 4px; 
+            border: 1px solid #d2b48c; /* Tan/Light brown border */
+            box-shadow: 0 4px 20px rgba(74, 59, 50, 0.08);
+            width: 100%; 
+            max-width: 800px; /* Widened screen container layout bounds */
+            box-sizing: border-box; 
+            display: flex;
+            flex-direction: row;
+            gap: 24px;
+            align-items: stretch;
+        }
+        
+        /* Left Column Content Layout Wrapper Panel */
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: left;
+            min-width: 220px;
+        }
+
+        /* Right Column Content Layout Wrapper Panel */
+        .right-panel {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        h2 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #6e5546;
+        }
+
+        .total-display { 
+            font-size: 22px; 
+            font-weight: normal; 
+            color: #4a3b32; 
+            margin: 0 0 20px 0; 
+            border-bottom: 1px dashed #d2b48c;
+            padding-bottom: 12px;
+        }
+        
+        .controls { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+        
+        /* Input & Buttons styled with elegant typewriter layout */
+        input, button { 
+            padding: 12px; 
+            border-radius: 3px; 
+            font-size: 15px; 
+            font-family: inherit;
+            -webkit-appearance: none; 
+            box-sizing: border-box;
+            width: 100%;
+        }
+        input { 
+            background: #ffffff; 
+            color: #4a3b32; 
+            border: 1px solid #c2a688;
+            text-align: center;
+        }
+        input::placeholder { color: #bca085; font-style: italic; }
+        input:focus { outline: none; border-color: #8c6d53; background: #fffcf9; }
+        
+        button { 
+            background: #8c6d53; /* Medium warm coffee brown */
+            color: #ffffff; 
+            font-weight: bold; 
+            border: 1px solid #70543e;
+            cursor: pointer; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        button:active { background: #70543e; }
+        
+        /* Grid container styled like archival laboratory graphing paper */
+        .chart-container { 
+            position: relative; 
+            height: 260px; 
+            width: 100%; 
+            background-color: #fdfbf7;
+            border: 1px solid #c2a688; 
+            border-radius: 2px;
+            box-sizing: border-box;
+        }
+        
+        canvas { 
+            width: 100%; 
+            height: 100%; 
+            display: block;
+        }
+
+        /* Fallback breakpoint for small phone screens in portrait mode orientation contexts */
+        @media (max-width: 600px) {
+            .dashboard {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <!-- LEFT COLUMN: SYSTEM CONTROL INPUT MODULE -->
+        <div class="left-panel">
+            <h2>Finance Tracker</h2>
+            <div class="total-display">Amount: <span id="valueDisplay">0.00</span></div>
+            <div class="controls">
+                <input type="number" step="any" inputmode="decimal" id="amountInput" placeholder="input data...">
+                <button onclick="calculateAndPlot()">Input</button>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: THE ARCHIVAL LINE GRAPH -->
+        <div class="right-panel">
+            <div class="chart-container">
+                <canvas id="liveChart" width="450" height="260"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputHistory = new Array();
+        
+        const canvas = document.getElementById('liveChart');
+        const ctx = canvas.getContext('2d');
+
+        clearAndDrawGridStructure();
+
+        function clearAndDrawGridStructure() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Pale sepia/tan lines to form an engineering logbook grid style
+            ctx.strokeStyle = 'rgba(210, 180, 140, 0.25)';
+            ctx.lineWidth = 1;
+            
+            // Vertical grid paths
+            for (let x = 20; x < canvas.width; x += 30) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            // Horizontal grid paths
+            for (let y = 20; y < canvas.height; y += 30) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
+            // Main base baseline axis rule
+            ctx.strokeStyle = 'rgba(140, 109, 83, 0.5)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(20, canvas.height - 20);
+            ctx.lineTo(canvas.width - 20, canvas.height - 20);
+            ctx.stroke();
+        }
+
+        // Refined line generator: highly precise but retains tiny organic micro-jitters
+        function drawPrecisionHandDrawnLine(x1, y1, x2, y2) {
+            ctx.strokeStyle = '#5c4033'; /* Fine dark sepia ink stroke color */
+            ctx.lineWidth = 2.2; /* Slightly thinner pen weight */
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+
+            const midX = (x1 + x2) / 2;
+            const midY = (y1 + y2) / 2;
+
+            // REDUCED JITTER SCALE: Provides much tighter, crisper, more precise plotting lines
+            const jitterScale = 0.5; 
+            const offsetChangeX = (Math.random() - 0.5) * jitterScale;
+            const offsetChangeY = (Math.random() - 0.5) * jitterScale;
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.quadraticCurveTo(midX + offsetChangeX, midY + offsetChangeY, x2, y2);
+            ctx.stroke();
+        }
+
+        function calculateAndPlot() {
+            const input = document.getElementById('amountInput');
+            const enteredAmount = parseFloat(input.value);
+
+            if (!isNaN(enteredAmount)) {
+                document.getElementById('valueDisplay').textContent = enteredAmount.toFixed(2);
+                inputHistory.push(enteredAmount);
+                
+                clearAndDrawGridStructure();
+                renderNativeCanvasPointsLines();
+
+                input.blur();
+                input.value = '';
+            }
+        }
+
+        function renderNativeCanvasPointsLines() {
+            if (inputHistory.length === 0) return;
+
+            const padding = 30;
+            const chartWidth = canvas.width - (padding * 2);
+            const chartHeight = canvas.height - (padding * 2);
+
+            let maxVal = Math.max(...inputHistory);
+            if (maxVal === 0) maxVal = 10;
+
+            const points = inputHistory.map((val, index) => {
+                const x = padding + (index * (chartWidth / Math.max(inputHistory.length - 1, 1)));
+                const y = (canvas.height - padding) - ((val / maxVal) * chartHeight);
+                return { x: x, y: y };
+            });
+
+            for (let i = 0; i < points.length - 1; i++) {
+                drawPrecisionHandDrawnLine(points[i].x, points[i].y, points[i+1].x, points[i+1].y);
+            }
+
+            // Draw compact, sharp ink nodes over coordinates
+            points.forEach(pt => {
+                ctx.fillStyle = '#b87333'; /* Distinguishable warm copper/terracotta accent color */
+                ctx.beginPath();
+                // REDUCED DOT SIZE: fine point pen tip aesthetic
+                ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add a very small ring buffer layer around it to make it pop beautifully
+                ctx.strokeStyle = '#5c4033';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
+                ctx.stroke();
+            });
+        }
+    </script>
+</body>
+</html>
