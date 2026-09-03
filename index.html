@@ -216,28 +216,28 @@
             ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(midX + offsetChangeX, midY + offsetChangeY, x2, y2); ctx.stroke();
         }
 
-        function calculateAndPlot() {
+                function calculateAndPlot() {
             const input = document.getElementById('amountInput');
             const btn = document.getElementById('recordBtn');
             const enteredAmount = parseFloat(input.value);
 
             if (!isNaN(enteredAmount)) {
-                // Lock fields temporarily while sending packets across the cloud network
+                // Lock fields temporarily while sending data across the cloud network
                 input.disabled = true;
                 btn.disabled = true;
-                document.getElementById('statusIndicator').textContent = "📤 Broadcasting entry to Excel...";
+                document.getElementById('statusIndicator').textContent = "📤 Broadcasting entry to Google Sheets...";
 
-                // Network packet: Send payload to your spreadsheet table object
+                // FIXED: Sheet Best expects a direct object entry payload {} rather than an enclosed array [{}]
                 fetch(EXCEL_API_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify([{ amount: enteredAmount }]) // Maps straight into the "amount" header
+                    body: JSON.stringify({ amount: enteredAmount }) // Stripped outer brackets to match structural specifications
                 })
                 .then(response => {
                     inputHistory.push(enteredAmount);
                     document.getElementById('valueDisplay').textContent = enteredAmount.toFixed(2);
                     
-                    document.getElementById('statusIndicator').textContent = "✅ Excel Saved.";
+                    document.getElementById('statusIndicator').textContent = "✅ Google Sheet Saved.";
                     clearAndDrawGridStructure();
                     renderNativeCanvasPointsLines();
                     
@@ -248,12 +248,14 @@
                     input.focus();
                 })
                 .catch(error => {
-                    console.error(error);
-                    document.getElementById('statusIndicator').textContent = "❌ Failed to save. Field reset.";
+                    console.error("Network Error: ", error);
+                    document.getElementById('statusIndicator').textContent = "❌ Failed to save. Network issue.";
                     input.disabled = false;
                     btn.disabled = false;
                     input.focus();
                 });
             } else {
                 input.focus(); 
-}}function renderNativeCanvasPointsLines() {if (inputHistory.length === 0) return;const padding = 30;const chartWidth = canvas.width - (padding * 2);const chartHeight = canvas.height - (padding * 2);let maxVal = Math.max(...inputHistory);if (maxVal === 0) maxVal = 10;const points = inputHistory.map((val, index) => {const x = padding + (index * (chartWidth / Math.max(inputHistory.length - 1, 1)));const y = (canvas.height - padding) - ((val / maxVal) * chartHeight);return { x: x, y: y };});for (let i = 0; i < points.length - 1; i++) {drawPrecisionHandDrawnLine(points[i].x, points[i].y, points[i+1].x, points[i+1].y);}points.forEach(pt => {ctx.fillStyle = '#b87333'; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.fill();ctx.strokeStyle = '#5c4033'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.stroke();});}
+            }
+        }
+function renderNativeCanvasPointsLines() {if (inputHistory.length === 0) return;const padding = 30;const chartWidth = canvas.width - (padding * 2);const chartHeight = canvas.height - (padding * 2);let maxVal = Math.max(...inputHistory);if (maxVal === 0) maxVal = 10;const points = inputHistory.map((val, index) => {const x = padding + (index * (chartWidth / Math.max(inputHistory.length - 1, 1)));const y = (canvas.height - padding) - ((val / maxVal) * chartHeight);return { x: x, y: y };});for (let i = 0; i < points.length - 1; i++) {drawPrecisionHandDrawnLine(points[i].x, points[i].y, points[i+1].x, points[i+1].y);}points.forEach(pt => {ctx.fillStyle = '#b87333'; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.fill();ctx.strokeStyle = '#5c4033'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.stroke();});}
