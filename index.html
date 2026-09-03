@@ -74,27 +74,56 @@
 
         function loadDataFromExcel() {
             document.getElementById('statusIndicator').textContent = "🔄 Downloading tracking row segments...";
+            console.log("Broadcasting database GET query connection stream...");
             
-            fetch(EXCEL_API_URL, { method: "GET", redirect: "follow" })
-                .then(response => response.json())
-                .then(data => {
-                    inputHistory = data.map(row => parseFloat(row.amount)).filter(val => !isNaN(val));
-                    
-                    if (inputHistory.length > 0) {
-                        const lastValue = inputHistory[inputHistory.length - 1];
-                        document.getElementById('valueDisplay').textContent = lastValue.toFixed(2);
-                    }
-                    
-                    document.getElementById('statusIndicator').textContent = "✅ Cloud sheet synchronized.";
-                    clearAndDrawGridStructure();
-                    renderNativeCanvasPointsLines();
-                })
-                .catch(error => {
-                    console.error("Fetch Error:", error);
-                    document.getElementById('statusIndicator').textContent = "❌ Connection failed. Check permissions.";
-                    clearAndDrawGridStructure();
-                });
+            // FIXED: Added mode and strict redirect configurations to force Chrome to follow Google's internal 302 jumps
+            fetch(EXCEL_API_URL, { 
+                method: "GET",
+                mode: "cors",
+                redirect: "follow",
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8"
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("HTTP error! status: " + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Database fetch successful. Core Payload: ", data);
+                
+                // If Google sends back an error message wrapped inside the JSON, log it
+                if (data.error) {
+                    console.error("Google Script internal error: ", data.error);
+                    document.getElementById('statusIndicator').textContent = "❌ Sheet error. Check Apps Script logs.";
+                    return;
+                }
+
+                inputHistory = data.map(row => {
+                    let parsed = parseFloat(row.amount);
+                    return isNaN(parsed) ? null : parsed;
+                }).filter(val => val !== null);
+                
+                console.log("Processed plot coordinates mapping index: ", inputHistory);
+                
+                if (inputHistory.length > 0) {
+                    const lastValue = inputHistory[inputHistory.length - 1];
+                    document.getElementById('valueDisplay').textContent = lastValue.toFixed(2);
+                }
+                
+                document.getElementById('statusIndicator').textContent = "✅ Cloud sheet synchronized.";
+                clearAndDrawGridStructure();
+                renderNativeCanvasPointsLines();
+            })
+            .catch(error => {
+                console.error("Critical download error context flag: ", error);
+                document.getElementById('statusIndicator').textContent = "❌ Connection failed. Check sheet settings.";
+                clearAndDrawGridStructure();
+            });
         }
+
 
         function clearAndDrawGridStructure() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
