@@ -146,16 +146,14 @@
     </div>
 
     <script>
-        // REPLACE WITH YOUR SHEET BEST OR STEIN GENERATED API CONNECTION LINK
-        const EXCEL_API_URL = "https://api.sheetbest.com/sheets/b905a8b6-677c-4b2c-9ad5-6a45f01da023"; 
+        const EXCEL_API_URL = "https://sheetbest.com"; 
 
         let inputHistory = new Array();
         const canvas = document.getElementById('liveChart');
         const ctx = canvas.getContext('2d');
 
-        // Automatically fetch data history directly from Excel Online when loading the page
         window.onload = function() {
-            if(EXCEL_API_URL === "https://api.sheetbest.com/sheets/b905a8b6-677c-4b2c-9ad5-6a45f01da023") {
+            if(EXCEL_API_URL === "" || EXCEL_API_URL.includes("YOUR_EXCEL_API")) {
                 document.getElementById('statusIndicator').textContent = "⚠️ Add your Excel API URL on line 125.";
                 clearAndDrawGridStructure();
                 return;
@@ -169,20 +167,25 @@
             fetch(EXCEL_API_URL)
                 .then(response => response.json())
                 .then(data => {
-                    // Extract values from the "amount" header rows inside your spreadsheet
-                    inputHistory = data.map(row => parseFloat(row.amount)).filter(val => !isNaN(val));
+                    // FIXED: Force Sheet Best rows to aggressively translate string inputs into clean JS integers
+                    inputHistory = data.map(row => {
+                        let parsed = parseFloat(row.amount);
+                        return isNaN(parsed) ? null : parsed;
+                    }).filter(val => val !== null);
                     
                     if (inputHistory.length > 0) {
                         const lastValue = inputHistory[inputHistory.length - 1];
                         document.getElementById('valueDisplay').textContent = lastValue.toFixed(2);
                     }
+                    
                     document.getElementById('statusIndicator').textContent = "✅ Cloud sheet synchronized.";
                     clearAndDrawGridStructure();
                     renderNativeCanvasPointsLines();
                 })
                 .catch(error => {
-                    console.error(error);
-                    document.getElementById('statusIndicator').textContent = "❌ Connection failed. Check settings.";
+                    console.error("Fetch Error:", error);
+                    document.getElementById('statusIndicator').textContent = "❌ Connection failed. Check sheet settings.";
+                    clearAndDrawGridStructure();
                 });
         }
 
@@ -213,35 +216,35 @@
             const midX = (x1 + x2) / 2; const midY = (y1 + y2) / 2;
             const jitterScale = 0.5; 
             const offsetChangeX = (Math.random() - 0.5) * jitterScale; const offsetChangeY = (Math.random() - 0.5) * jitterScale;
-            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(midX + offsetChangeX, midY + offsetChangeY, x2, y2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(midX + offsetChangeX, midY + offsetChangeY, x2, y2); 
+            ctx.stroke(); 
         }
 
-                function calculateAndPlot() {
+        function calculateAndPlot() {
             const input = document.getElementById('amountInput');
             const btn = document.getElementById('recordBtn');
             const enteredAmount = parseFloat(input.value);
 
             if (!isNaN(enteredAmount)) {
-                // Lock fields temporarily while sending data across the cloud network
                 input.disabled = true;
                 btn.disabled = true;
                 document.getElementById('statusIndicator').textContent = "📤 Broadcasting entry to Google Sheets...";
 
-                // FIXED: Sheet Best expects a direct object entry payload {} rather than an enclosed array [{}]
+                // Send clean JSON payload structure to Sheet Best endpoints
                 fetch(EXCEL_API_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ amount: enteredAmount }) // Stripped outer brackets to match structural specifications
+                    body: JSON.stringify({ amount: enteredAmount }) 
                 })
-                .then(response => {
+                .then(response => response.json())
+                .then(result => {
                     inputHistory.push(enteredAmount);
                     document.getElementById('valueDisplay').textContent = enteredAmount.toFixed(2);
-                    
                     document.getElementById('statusIndicator').textContent = "✅ Google Sheet Saved.";
+                    
                     clearAndDrawGridStructure();
                     renderNativeCanvasPointsLines();
                     
-                    // Unlock fields and refocus text cursor
                     input.value = '';
                     input.disabled = false;
                     btn.disabled = false;
@@ -255,7 +258,4 @@
                     input.focus();
                 });
             } else {
-                input.focus(); 
-            }
-        }
-function renderNativeCanvasPointsLines() {if (inputHistory.length === 0) return;const padding = 30;const chartWidth = canvas.width - (padding * 2);const chartHeight = canvas.height - (padding * 2);let maxVal = Math.max(...inputHistory);if (maxVal === 0) maxVal = 10;const points = inputHistory.map((val, index) => {const x = padding + (index * (chartWidth / Math.max(inputHistory.length - 1, 1)));const y = (canvas.height - padding) - ((val / maxVal) * chartHeight);return { x: x, y: y };});for (let i = 0; i < points.length - 1; i++) {drawPrecisionHandDrawnLine(points[i].x, points[i].y, points[i+1].x, points[i+1].y);}points.forEach(pt => {ctx.fillStyle = '#b87333'; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.fill();ctx.strokeStyle = '#5c4033'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.stroke();});}
+input.focus();}}function renderNativeCanvasPointsLines() {if (inputHistory.length === 0) return;const padding = 30;const chartWidth = canvas.width - (padding * 2);const chartHeight = canvas.height - (padding * 2);let maxVal = Math.max(...inputHistory);if (maxVal === 0) maxVal = 10;const points = inputHistory.map((val, index) => {const x = padding + (index * (chartWidth / Math.max(inputHistory.length - 1, 1)));const y = (canvas.height - padding) - ((val / maxVal) * chartHeight);return { x: x, y: y };});for (let i = 0; i < points.length - 1; i++) {drawPrecisionHandDrawnLine(points[i].x, points[i].y, points[i+1].x, points[i+1].y);}points.forEach(pt => {ctx.fillStyle = '#b87333'; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.fill();ctx.strokeStyle = '#5c4033'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2); ctx.stroke();});}
